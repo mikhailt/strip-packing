@@ -2,12 +2,12 @@ package main
 
 import (
   "cmath"
+  "fmt"
 )
 
 type Bin struct {
   Rect
-  bins Bin[]
-  top int
+  top float64
   t int
 }
 
@@ -16,38 +16,48 @@ type Bin struct {
 // Returns an upper bound of resulting alignment. This algo in not quite 
 // on-line, it uses number of all the rectangles.
 type Kp1Algo struct {
+  frame Bin
+  bins []Bin
+  nbins int
   delta, u float64
   d int
 }
 
 func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
-  var top float64 = be
-  n := len(a)
-  bins = make([]Bin, n)
-  nbins = 0
-  var j int
+  v.frame.top = 0
+  v.frame.y = be
+  v.frame.x = 0
+  v.frame.w = 1
   
-  v.delta = real(cmath.Pow(cmplx(float64(n), 0), -1/3))
-  v.u = real(cmath.Pow(cmplx(float64(n), 0), 1/3))
+  n := len(a)
+  v.bins = make([]Bin, n)
+  v.nbins = 0
+  var j int
+  var r *Rect
+  
+  v.delta = real(cmath.Pow(cmplx(float64(n), 0), (-1.0/3)))
+  v.u = real(cmath.Pow(cmplx(float64(n), 0), (1.0/3)))
   v.d = int(1 / (2 * v.delta))
-  for _, r := range(a) {
+  
+  fmt.Printf("delta = %0.9v\nu = %0.9v\n", v.delta, v.u)
+  
+  for i, _ := range(a) {
+    r = &a[i]
     if r.w > (1 - v.delta) {
-      r.y = top
-      r.x = 0
-      top += r.h
+      PackToBin(&v.frame, r)
       continue
     }
     // Determining type of the current rectangle.
     j = 0
     for y := 1; y <= v.d; y++ {
-      if r.w <= (v.delta * y) {
+      if r.w <= (v.delta * float64(y)) {
         j = y
         break
       }
     }
     if 0 == j {
       for y := v.d; y >= 1; y-- {
-        if r.w <= (1 - v.delta * y) {
+        if r.w <= (1 - v.delta * float64(y)) {
           j = v.d * 2 - y + 1
           break
         }
@@ -55,37 +65,52 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
     }
     // Finding suitable opened bin for current rectangle.
     bin_found := false
-    for y := 0; y < nbins; y++ {
-      if bins[y].t != j {
+    for y := 0; y < v.nbins; y++ {
+      if v.bins[y].t != j {
         continue
       }
-      if (bins[y].h - bins[y].top) >= r.w {
-        r.x = bin[y].x
-        r.y = bin[y].y + bin[y].top
-        bin[y].top += r.h
-        bind_found = true
+      if (v.bins[y].h - v.bins[y].top) >= r.w {
+        PackToBin(&v.bins[y], r)
+        bin_found = true
         break
       }
     }
     if bin_found {
       continue
     }
-    // Opening new bin for current rectangle.
-    var jj int
-    if j > v.d {
-      jj = 2 * v.d - j + 1
-    } else {
-      jj = j
-    }
-    
+    // Opening pair of new bins and packing current rectangle into corresponging
+    // one.
+    v.AddBin(j)
+    PackToBin(&v.frame, &v.bins[v.nbins - 1].Rect)
+    PackToBin(&v.bins[v.nbins - 1], r)
+    v.AddBin(v.ComplType(j))
+    v.bins[v.nbins - 1].y = v.bins[v.nbins - 2].y
+    v.bins[v.nbins - 1].x = v.bins[v.nbins - 2].w
   }
-  return top
+  return v.frame.y + v.frame.top
 }
 
-func (v *Kp1Algo) AddBin(x, y, h, w float64) {
-  v.bins[v.nbins].x = x
-  v.bins[v.nbins].y = y
-  v.bins[v.nbins].h = h
-  v.bins[v.nbins].w = w
+func (v *Kp1Algo) AddBin(t int) {
+  v.bins[v.nbins].h = v.u
+  v.bins[v.nbins].w = v.WidthType(t)
+  v.bins[v.nbins].top = 0
+  v.bins[v.nbins].t = t
   v.nbins++
+}
+
+func PackToBin(bin *Bin, r *Rect) {
+  r.x = bin.x
+  r.y = bin.y + bin.top
+  bin.top += r.h
+}
+
+func (v *Kp1Algo) ComplType(t int) int {
+  return 2 * v.d - t + 1
+}
+
+func (v *Kp1Algo) WidthType(t int) float64 {
+  if t <= v.d {
+    return v.delta * float64(t)
+  }
+  return 1 - float64(v.ComplType(t)) * v.delta
 }

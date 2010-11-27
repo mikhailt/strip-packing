@@ -6,6 +6,7 @@ import (
   "os"
   "rand"
   "time"
+  "fmt"
 )
 
 var draw *gdk.GdkDrawable
@@ -62,13 +63,21 @@ func GenerateRectangles(n int) []Rect {
   return res
 }
 
+func TotalArea(rects []Rect) float64 {
+  var res float64 = 0
+  for _, r := range(rects) {
+    res += r.w * r.h
+  }
+  return res
+}
+
 func main() {
   rand.Seed(time.Nanoseconds())
-  rects := GenerateRectangles(
-  5)
+  rects := GenerateRectangles(1000000)
   var algo Kp1Algo
   H = algo.Pack(rects, 0)
-  println(int(H))
+  fmt.Printf("H = %0.9v\nS = %0.9v", H, TotalArea(rects))
+  return
 
 	gtk.Init(&os.Args);
 	window := gtk.Window(gtk.GTK_WINDOW_TOPLEVEL);
@@ -100,7 +109,8 @@ func main() {
 
 	drawingarea.Connect("expose-event", func() {
 		if pixmap != nil {
-			drawingarea.GetWindow().GetDrawable().DrawDrawable(gc, pixmap.GetDrawable(), 0, 0, 0, 0, -1, -1)
+			drawingarea.GetWindow().GetDrawable().DrawDrawable(gc, 
+			  pixmap.GetDrawable(), 0, 0, 0, 0, -1, -1)
 		}
 		draw_all(rects)
 	}, nil);
