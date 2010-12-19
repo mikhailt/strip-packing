@@ -11,17 +11,19 @@ func Validate(a []Rect) bool {
 	cnt := len(a)
 	for y := 0; y < cnt; y++ {
 		if !rect_inside_strip(&a[y]) {
-			println("A")
+			println("Following rectangle intersects strip borders")
+			fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n",
+				a[y].x, a[y].w, a[y].y, a[y].h)
 			return false
 		}
 	}
-	for y := 0; y < cnt - 1; y++ {
+	for y := 0; y < cnt-1; y++ {
 		for j := y + 1; j < cnt; j++ {
 			if rects_overlap(&a[y], &a[j]) {
 				println("Following 2 rectangles overlap")
-				fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n", 
+				fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n",
 					a[y].x, a[y].w, a[y].y, a[y].h)
-				fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n", 
+				fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n",
 					a[j].x, a[j].w, a[j].y, a[j].h)
 				return false
 			}
@@ -32,14 +34,14 @@ func Validate(a []Rect) bool {
 
 func rect_inside_strip(r *Rect) bool {
 	return !float64_less(r.x, 0) &&
-		!float64_less(1, r.x + r.w) &&
+		!float64_less(1, r.x+r.w) &&
 		!float64_less(r.y, 0)
 }
 
 // Returns true in case two rectangles have non-zero common area regards to 
 // float64 comparison function (float64_less). False o/w.
 func rects_overlap(a *Rect, b *Rect) bool {
-	return segments_overlap(&Segment{a.x, a.x + a.w}, &Segment{b.x, b.x + b.w}) && 
+	return segments_overlap(&Segment{a.x, a.x + a.w}, &Segment{b.x, b.x + b.w}) &&
 		segments_overlap(&Segment{a.y, a.y + a.h}, &Segment{b.y, b.y + b.h})
 }
 

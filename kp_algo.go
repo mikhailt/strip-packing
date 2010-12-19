@@ -51,7 +51,7 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
 	v.d = int(1 / (2 * v.delta))
 
 	// Initialization of bins map.
-	for y := 0; y <= 2*v.d + 1; y++ {
+	for y := 0; y <= 2*v.d+1; y++ {
 		v.bins[y] = NewBinList()
 	}
 
@@ -101,7 +101,7 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
 	return v.frame.y + v.frame.top
 }
 
-func (v *Kp1Algo) AddBin(t int) *Bin{
+func (v *Kp1Algo) AddBin(t int) *Bin {
 	b := new(Bin)
 	b.h = v.u
 	b.w = v.WidthType(t)

@@ -103,9 +103,9 @@ func main() {
 	total_area := TotalArea(rects)
 	println("Number of rectangles = ", n)
 	fmt.Printf("Solution height = %0.9v\nTotal area = %0.9v\n", H, total_area)
-	fmt.Printf("Uncovered area = %0.9v\n", H - total_area)
-	fmt.Printf("N^(2/3) = %0.9v\n", real(cmath.Pow(cmplx(float64(n), 0), (2.0 / 3))))
-	
+	fmt.Printf("Uncovered area = %0.9v\n", H-total_area)
+	fmt.Printf("N^(2/3) = %0.9v\n", real(cmath.Pow(cmplx(float64(n), 0), (2.0/3))))
+
 	if true == *pvalidate {
 		if false == Validate(rects) {
 			println("Validation: ERROR")
@@ -113,7 +113,7 @@ func main() {
 			println("Validation: OK")
 		}
 	}
-	
+
 	if false == *prender {
 		return
 	}
