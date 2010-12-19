@@ -10,14 +10,27 @@ type Bin struct {
 	t   int
 }
 
+type BinList struct {
+	m map[int]*Bin
+}
+
+func NewBinList() *BinList {
+	bl := new(BinList)
+	bl.m = make(map[int]*Bin)
+	return bl
+}
+
+func (v *BinList) AddBin(b *Bin) {
+	v.m[len(v.m)] = b
+}
+
 // Packs rectangles from slice 'a' to the strip starting from lower bound 'be'
 // according to Kuzyurin-Pospelov's basic algorithm. 
 // Returns an upper bound of resulting alignment. This algo in not quite 
 // on-line, it uses number of all the rectangles.
 type Kp1Algo struct {
 	frame    Bin
-	bins     []Bin
-	nbins    int
+	bins     map[int]*BinList
 	delta, u float64
 	d        int
 }
@@ -29,14 +42,18 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
 	v.frame.w = 1
 
 	n := len(a)
-	v.bins = make([]Bin, n)
-	v.nbins = 0
+	v.bins = make(map[int]*BinList)
 	var j int
 	var r *Rect
 
 	v.delta = real(cmath.Pow(cmplx(float64(n), 0), (-1.0 / 3)))
 	v.u = real(cmath.Pow(cmplx(float64(n), 0), (1.0 / 3)))
 	v.d = int(1 / (2 * v.delta))
+
+	// Initialization of bins map.
+	for y := 0; y <= 2*v.d + 1; y++ {
+		v.bins[y] = NewBinList()
+	}
 
 	for i, _ := range a {
 		r = &a[i]
@@ -62,12 +79,9 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
 		}
 		// Finding suitable opened bin for current rectangle.
 		bin_found := false
-		for y := 0; y < v.nbins; y++ {
-			if v.bins[y].t != j {
-				continue
-			}
-			if (v.bins[y].h - v.bins[y].top) >= r.h {
-				PackToBin(&v.bins[y], r)
+		for _, b := range v.bins[j].m {
+			if (b.h - b.top) >= r.h {
+				PackToBin(b, r)
 				bin_found = true
 				break
 			}
@@ -77,22 +91,24 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
 		}
 		// Opening pair of new bins and packing current rectangle into corresponging
 		// one.
-		v.AddBin(j)
-		PackToBin(&v.frame, &v.bins[v.nbins-1].Rect)
-		PackToBin(&v.bins[v.nbins-1], r)
-		v.AddBin(v.ComplType(j))
-		v.bins[v.nbins-1].y = v.bins[v.nbins-2].y
-		v.bins[v.nbins-1].x = v.bins[v.nbins-2].w
+		b1 := v.AddBin(j)
+		PackToBin(&v.frame, &b1.Rect)
+		PackToBin(b1, r)
+		b2 := v.AddBin(v.ComplType(j))
+		b2.y = b1.y
+		b2.x = b1.w
 	}
 	return v.frame.y + v.frame.top
 }
 
-func (v *Kp1Algo) AddBin(t int) {
-	v.bins[v.nbins].h = v.u
-	v.bins[v.nbins].w = v.WidthType(t)
-	v.bins[v.nbins].top = 0
-	v.bins[v.nbins].t = t
-	v.nbins++
+func (v *Kp1Algo) AddBin(t int) *Bin{
+	b := new(Bin)
+	b.h = v.u
+	b.w = v.WidthType(t)
+	b.top = 0
+	b.t = t
+	v.bins[t].AddBin(b)
+	return b
 }
 
 func PackToBin(bin *Bin, r *Rect) {
