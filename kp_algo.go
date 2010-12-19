@@ -2,7 +2,6 @@ package main
 
 import (
 	"cmath"
-	"fmt"
 )
 
 type Bin struct {
@@ -39,8 +38,6 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
 	v.u = real(cmath.Pow(cmplx(float64(n), 0), (1.0 / 3)))
 	v.d = int(1 / (2 * v.delta))
 
-	fmt.Printf("delta = %0.9v\nu = %0.9v\n", v.delta, v.u)
-
 	for i, _ := range a {
 		r = &a[i]
 		if r.w > (1 - v.delta) {
@@ -69,7 +66,7 @@ func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
 			if v.bins[y].t != j {
 				continue
 			}
-			if (v.bins[y].h - v.bins[y].top) >= r.w {
+			if (v.bins[y].h - v.bins[y].top) >= r.h {
 				PackToBin(&v.bins[y], r)
 				bin_found = true
 				break
@@ -113,4 +110,28 @@ func (v *Kp1Algo) WidthType(t int) float64 {
 		return v.delta * float64(t)
 	}
 	return 1 - float64(v.ComplType(t))*v.delta
+}
+
+// Algorithm on top of Kp1Algo. Kp2 applies Kp1 for consequtive subsequences of 
+// length 2, 4, 8, 16, etc in on-line manner so that Kp2Algo actually does not 
+// know  total number of rectangles.
+type Kp2Algo struct{}
+
+func (v *Kp2Algo) Pack(a []Rect, be float64) float64 {
+	var kp1 Kp1Algo
+	var b []Rect
+	exit_flag := false
+	var H float64 = 0
+
+	for cnt := 2; !exit_flag; cnt *= 2 {
+		if cnt > len(a) {
+			exit_flag = true
+			b = a
+		} else {
+			b = a[:cnt]
+			a = a[cnt:]
+		}
+		H = kp1.Pack(b, H)
+	}
+	return H
 }

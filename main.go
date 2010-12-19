@@ -7,6 +7,9 @@ import (
 	"rand"
 	"time"
 	"fmt"
+	"strconv"
+	"flag"
+	"cmath"
 )
 
 var draw *gdk.GdkDrawable
@@ -78,13 +81,42 @@ func TotalArea(rects []Rect) float64 {
 	return res
 }
 
+type Algorithm interface {
+	Pack(a []Rect, be float64) float64
+}
+
 func main() {
+	prender := flag.Bool("r", false, "Render resulting alignment of all the rectangles in the strip")
+	pvalidate := flag.Bool("v", false, "Validate resulting alignment")
+	palgo := flag.String("a", "kp1", "Type of algorithm")
+	flag.Parse()
 	rand.Seed(time.Nanoseconds())
-	rects := GenerateRectangles(5000)
-	var algo Kp1Algo
+	n, _ := strconv.Atoi(flag.Arg(0))
+	rects := GenerateRectangles(n)
+	var algo Algorithm
+	if "kp1" == *palgo {
+		algo = new(Kp1Algo)
+	} else if "kp2" == *palgo {
+		algo = new(Kp2Algo)
+	}
 	H = algo.Pack(rects, 0)
-	fmt.Printf("H = %0.9v\nS = %0.9v", H, TotalArea(rects))
-	//return
+	total_area := TotalArea(rects)
+	println("Number of rectangles = ", n)
+	fmt.Printf("Solution height = %0.9v\nTotal area = %0.9v\n", H, total_area)
+	fmt.Printf("Uncovered area = %0.9v\n", H - total_area)
+	fmt.Printf("N^(2/3) = %0.9v\n", real(cmath.Pow(cmplx(float64(n), 0), (2.0 / 3))))
+	
+	if true == *pvalidate {
+		if false == Validate(rects) {
+			println("Validation: ERROR")
+		} else {
+			println("Validation: OK")
+		}
+	}
+	
+	if false == *prender {
+		return
+	}
 
 	gtk.Init(&os.Args)
 	window := gtk.Window(gtk.GTK_WINDOW_TOPLEVEL)
