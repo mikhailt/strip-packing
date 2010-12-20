@@ -85,28 +85,24 @@ type Algorithm interface {
 	Pack(a []Rect, be float64) float64
 }
 
-func main() {
-	prender := flag.Bool("r", false, "Render resulting alignment of all the rectangles in the strip")
-	pvalidate := flag.Bool("v", false, "Validate resulting alignment")
-	palgo := flag.String("a", "kp1", "Type of algorithm")
-	flag.Parse()
-	rand.Seed(time.Nanoseconds())
-	n, _ := strconv.Atoi(flag.Arg(0))
+// Returns uncovered area divided by N^(2/3).
+func run(n int, render, validate bool, algo_name string) (coefficient float64) {
 	rects := GenerateRectangles(n)
 	var algo Algorithm
-	if "kp1" == *palgo {
+	if "kp1" == algo_name {
 		algo = new(Kp1Algo)
-	} else if "kp2" == *palgo {
+	} else if "kp2" == algo_name {
+		algo = new(Kp2Algo)
+	} else {
 		algo = new(Kp2Algo)
 	}
 	H = algo.Pack(rects, 0)
 	total_area := TotalArea(rects)
-	println("Number of rectangles = ", n)
 	fmt.Printf("Solution height = %0.9v\nTotal area = %0.9v\n", H, total_area)
 	fmt.Printf("Uncovered area = %0.9v\n", H-total_area)
-	fmt.Printf("N^(2/3) = %0.9v\n", real(cmath.Pow(cmplx(float64(n), 0), (2.0/3))))
+	coefficient = (H - total_area) / real(cmath.Pow(cmplx(float64(n), 0), (2.0/3)))
 
-	if true == *pvalidate {
+	if true == validate {
 		if false == Validate(rects) {
 			println("Validation: ERROR")
 		} else {
@@ -114,7 +110,7 @@ func main() {
 		}
 	}
 
-	if false == *prender {
+	if false == render {
 		return
 	}
 
@@ -164,4 +160,25 @@ func main() {
 	window.ShowAll()
 
 	gtk.Main()
+	return
+}
+
+func main() {
+	prender := flag.Bool("r", false, "Render resulting alignment of all the rectangles in the strip")
+	pvalidate := flag.Bool("v", false, "Validate resulting alignment")
+	palgo := flag.String("a", "kp1", "Type of algorithm")
+	ptimes := flag.Int("t", 1, "Number of tests")
+	flag.Parse()
+	rand.Seed(time.Nanoseconds())
+	n, _ := strconv.Atoi(flag.Arg(0))
+
+	println("Number of rectangles = ", n)
+	fmt.Printf("N^(2/3) = %0.9v\n\n", real(cmath.Pow(cmplx(float64(n), 0), (2.0/3))))
+
+	var coef_s float64 = 0
+	for y := 0; y < *ptimes; y++ {
+		coef := run(n, *prender, *pvalidate, *palgo)
+		coef_s += coef
+	}
+	fmt.Printf("\nAverage coefficient = %0.9v\n", coef_s/float64(*ptimes))
 }
