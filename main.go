@@ -93,6 +93,8 @@ func run(n int, render, validate bool, algo_name string) (coefficient float64) {
 		algo = new(Kp1Algo)
 	} else if "kp2" == algo_name {
 		algo = new(Kp2Algo)
+	} else if "2d" == algo_name {
+		algo = new(TdAlgo)
 	} else {
 		algo = new(Kp2Algo)
 	}
