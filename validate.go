@@ -4,10 +4,19 @@ import (
 	"fmt"
 )
 
+func Validate(a [][]Rect) bool {
+	for y := 0; y < len(a); y++ {
+		if false == ValidateStrip(a[y]) {
+			return false
+		}
+	}
+	return true
+}
+
 // Validates that rectangles from a are packed into strip correctly. I.e. 
 // without overlapping and strictly inside half-infine strip of width 1.
 // Returns true/false depending on correctness. 
-func Validate(a []Rect) bool {
+func ValidateStrip(a []Rect) bool {
 	cnt := len(a)
 	for y := 0; y < cnt; y++ {
 		if !rect_inside_strip(&a[y]) {

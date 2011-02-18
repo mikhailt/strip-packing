@@ -7,7 +7,6 @@ import (
 	"rand"
 	"time"
 	"fmt"
-	"strconv"
 	"flag"
 	"cmath"
 )
@@ -30,12 +29,10 @@ type Rect struct {
 
 func (r *Rect) Draw(filled bool) {
 	if 0 == conv_h(r.h) {
-		draw.DrawRectangle(gc, filled, conv_x(r.x), conv_y(r.y+r.h),
-			conv_w(r.w), 1)
+		draw.DrawRectangle(gc, filled, conv_x(r.x), conv_y(r.y+r.h), conv_w(r.w), 1)
 		return
 	}
-	draw.DrawRectangle(gc, filled, conv_x(r.x), conv_y(r.y+r.h),
-		conv_w(r.w), conv_h(r.h))
+	draw.DrawRectangle(gc, filled, conv_x(r.x), conv_y(r.y+r.h), conv_w(r.w), conv_h(r.h))
 }
 
 func conv_y(y float64) int {
@@ -54,29 +51,47 @@ func conv_w(w float64) int {
 	return int((w / W) * MAX_X)
 }
 
-func draw_all(a []Rect) {
-	global := Rect{0, 0, H, 1}
-	global.Draw(false)
-	for _, r := range a {
-		r.Draw(true)
+func draw_all(a [][]Rect) {
+	strip_width := W / float64(len(a))
+	for y := 0; y < len(a); y++ {
+		global := Rect{float64(y) * strip_width, 0, H, strip_width}
+		global.Draw(false)
+		for _, r := range a[y] {
+			// Dirty hack! All rendering code have to be reconsidered.
+			r.w *= strip_width
+			r.x *= strip_width
+			r.x += float64(y) * strip_width
+			r.Draw(true)
+		}
 	}
 }
 
-func GenerateRectangles(n int) []Rect {
-	res := make([]Rect, n)
-	for y := 0; y < n; y++ {
-		res[y].h = rand.Float64()
-		res[y].w = rand.Float64()
-		res[y].x = rand.Float64()
-		res[y].y = rand.Float64()
+func GenerateRectangles(n int, m int) [][]Rect {
+	res := make([][]Rect, m)
+	for y := 0; y < m; y++ {
+		var one_more int
+		if y >= (n % m) {
+			one_more = 0
+		} else {
+			one_more = 1
+		}
+		res[y] = make([]Rect, (n / m) + one_more)
+		for j := 0; j < len(res[y]); j++ {
+			res[y][j].h = rand.Float64()
+			res[y][j].w = rand.Float64()
+			res[y][j].x = rand.Float64()
+			res[y][j].y = rand.Float64()
+		}
 	}
 	return res
 }
 
-func TotalArea(rects []Rect) float64 {
+func TotalArea(rects [][]Rect) float64 {
 	var res float64 = 0
-	for _, r := range rects {
-		res += r.w * r.h
+	for y := 0; y < len(rects); y++ {
+		for _, r := range rects[y] {
+			res += r.w * r.h
+		}
 	}
 	return res
 }
@@ -86,23 +101,35 @@ type Algorithm interface {
 }
 
 // Returns uncovered area divided by N^(2/3).
-func run(n int, render, validate bool, algo_name string) (coefficient float64) {
-	rects := GenerateRectangles(n)
-	var algo Algorithm
-	if "kp1" == algo_name {
-		algo = new(Kp1Algo)
-	} else if "kp2" == algo_name {
-		algo = new(Kp2Algo)
-	} else if "2d" == algo_name {
-		algo = new(TdAlgo)
-	} else {
-		algo = new(Kp2Algo)
+func run(n int, render, validate bool, algo_name string, m int) (coefficient float64) {
+	rects := GenerateRectangles(n, m)
+	algo := make([]Algorithm, m)
+	// Separate algo instance for every strip, to be reconsidered.
+	for y := 0; y < m; y++ {
+		if "kp1" == algo_name {
+			algo[y] = new(Kp1Algo)
+		} else if "kp2" == algo_name {
+			algo[y] = new(Kp2Algo)
+		} else if "2d" == algo_name {
+			algo[y] = new(TdAlgo)
+		} else {
+			algo[y] = new(Kp2Algo)
+		}
 	}
-	H = algo.Pack(rects, 0)
+	
+	H_max := float64(0)
+	for y := 0; y < m; y++ {
+		H_cur := algo[y].Pack(rects[y], 0)
+		if H_cur > H_max {
+			H_max = H_cur
+		}
+	}
+	H = H_max
 	total_area := TotalArea(rects)
 	fmt.Printf("Solution height = %0.9v\nTotal area = %0.9v\n", H, total_area)
-	fmt.Printf("Uncovered area = %0.9v\n", H-total_area)
-	coefficient = (H - total_area) / real(cmath.Pow(cmplx(float64(n), 0), (2.0/3)))
+	uncovered_area := H * float64(m) - total_area
+	fmt.Printf("Uncovered area = %0.9v\n", uncovered_area)
+	coefficient = uncovered_area / real(cmath.Pow(cmplx(float64(n), 0), (2.0/3)))
 
 	if true == validate {
 		if false == Validate(rects) {
@@ -166,20 +193,21 @@ func run(n int, render, validate bool, algo_name string) (coefficient float64) {
 }
 
 func main() {
-	prender := flag.Bool("r", false, "Render resulting alignment of all the rectangles in the strip")
+	prender := flag.Bool("r", false, "Render resulting alignment of all the rectangles")
+	pn := flag.Int("n", 100, "Number of rectangles")
+	pm := flag.Int("m", 1, "Number of strips")
 	pvalidate := flag.Bool("v", false, "Validate resulting alignment")
 	palgo := flag.String("a", "kp1", "Type of algorithm")
 	ptimes := flag.Int("t", 1, "Number of tests")
 	flag.Parse()
 	rand.Seed(time.Nanoseconds())
-	n, _ := strconv.Atoi(flag.Arg(0))
 
-	println("Number of rectangles = ", n)
-	fmt.Printf("N^(2/3) = %0.9v\n\n", real(cmath.Pow(cmplx(float64(n), 0), (2.0/3))))
+	println("Number of rectangles = ", *pn)
+	fmt.Printf("N^(2/3) = %0.9v\n\n", real(cmath.Pow(cmplx(float64(*pn), 0), (2.0/3))))
 
 	var coef_s float64 = 0
 	for y := 0; y < *ptimes; y++ {
-		coef := run(n, *prender, *pvalidate, *palgo)
+		coef := run(*pn, *prender, *pvalidate, *palgo, *pm)
 		coef_s += coef
 	}
 	fmt.Printf("\nAverage coefficient = %0.9v\n", coef_s/float64(*ptimes))
