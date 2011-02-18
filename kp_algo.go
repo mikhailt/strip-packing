@@ -35,7 +35,11 @@ type Kp1Algo struct {
 	d        int
 }
 
-func (v *Kp1Algo) Pack(a []Rect, be float64) float64 {
+func (v *Kp1Algo) Pack(rects [][]Rect, be float64) float64 {
+	return v.PackSingleStrip(rects[0], be)
+}
+
+func (v *Kp1Algo) PackSingleStrip(a []Rect, be float64) float64 {
 	v.frame.top = 0
 	v.frame.y = be
 	v.frame.x = 0
@@ -133,7 +137,8 @@ func (v *Kp1Algo) WidthType(t int) float64 {
 // know  total number of rectangles.
 type Kp2Algo struct{}
 
-func (v *Kp2Algo) Pack(a []Rect, be float64) float64 {
+func (v *Kp2Algo) Pack(rects [][]Rect, be float64) float64 {
+	a := rects[0]
 	var kp1 Kp1Algo
 	var b []Rect
 	exit_flag := false
@@ -147,7 +152,7 @@ func (v *Kp2Algo) Pack(a []Rect, be float64) float64 {
 			b = a[:cnt]
 			a = a[cnt:]
 		}
-		H = kp1.Pack(b, H)
+		H = kp1.PackSingleStrip(b, H)
 	}
 	return H
 }

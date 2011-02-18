@@ -6,5 +6,6 @@ GOFILES=\
 	kp_algo.go\
 	validate.go\
 	2d_algo.go\
+	kp_msp_algo.go
 
 include $(GOROOT)/src/Make.cmd

@@ -97,34 +97,27 @@ func TotalArea(rects [][]Rect) float64 {
 }
 
 type Algorithm interface {
-	Pack(a []Rect, be float64) float64
+	Pack(a [][]Rect, be float64) float64
 }
 
 // Returns uncovered area divided by N^(2/3).
 func run(n int, render, validate bool, algo_name string, m int) (coefficient float64) {
 	rects := GenerateRectangles(n, m)
-	algo := make([]Algorithm, m)
-	// Separate algo instance for every strip, to be reconsidered.
-	for y := 0; y < m; y++ {
-		if "kp1" == algo_name {
-			algo[y] = new(Kp1Algo)
-		} else if "kp2" == algo_name {
-			algo[y] = new(Kp2Algo)
-		} else if "2d" == algo_name {
-			algo[y] = new(TdAlgo)
-		} else {
-			algo[y] = new(Kp2Algo)
-		}
+	var algo Algorithm
+
+	if "kp1" == algo_name {
+		algo = new(Kp1Algo)
+	} else if "kp2" == algo_name {
+		algo = new(Kp2Algo)
+	} else if "2d" == algo_name {
+		algo = new(TdAlgo)
+	} else if "kp2_msp" == algo_name {
+		algo = new(Kp2MspAlgo)
+	} else {
+		algo = new(Kp2Algo)
 	}
-	
-	H_max := float64(0)
-	for y := 0; y < m; y++ {
-		H_cur := algo[y].Pack(rects[y], 0)
-		if H_cur > H_max {
-			H_max = H_cur
-		}
-	}
-	H = H_max
+
+	H = algo.Pack(rects, 0)
 	total_area := TotalArea(rects)
 	fmt.Printf("Solution height = %0.9v\nTotal area = %0.9v\n", H, total_area)
 	uncovered_area := H * float64(m) - total_area
@@ -197,7 +190,7 @@ func main() {
 	pn := flag.Int("n", 100, "Number of rectangles")
 	pm := flag.Int("m", 1, "Number of strips")
 	pvalidate := flag.Bool("v", false, "Validate resulting alignment")
-	palgo := flag.String("a", "kp1", "Type of algorithm")
+	palgo := flag.String("a", "kp2", "Type of algorithm")
 	ptimes := flag.Int("t", 1, "Number of tests")
 	flag.Parse()
 	rand.Seed(time.Nanoseconds())

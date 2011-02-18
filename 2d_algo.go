@@ -11,7 +11,8 @@ type TdAlgo struct {
 	nrects int
 }
 
-func (v *TdAlgo) Pack(a []Rect, be float64) float64 {
+func (v *TdAlgo) Pack(rects [][]Rect, be float64) float64 {
+	a := rects[0]
 	v.frame.top = 0
 	v.frame.y = be
 	v.frame.x = 0
