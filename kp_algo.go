@@ -50,8 +50,8 @@ func (v *Kp1Algo) PackSingleStrip(a []Rect, be float64) float64 {
 	var j int
 	var r *Rect
 
-	v.delta = real(cmath.Pow(cmplx(float64(n), 0), (-1.0 / 3)))
-	v.u = real(cmath.Pow(cmplx(float64(n), 0), (1.0 / 3)))
+	v.delta = real(cmath.Pow(complex(float64(n), 0), (-1.0 / 3)))
+	v.u = real(cmath.Pow(complex(float64(n), 0), (1.0 / 3)))
 	v.d = int(1 / (2 * v.delta))
 
 	// Initialization of bins map.

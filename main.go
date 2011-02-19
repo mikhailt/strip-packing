@@ -122,7 +122,7 @@ func run(n int, render, validate bool, algo_name string, m int) (coefficient flo
 	fmt.Printf("Solution height = %0.9v\nTotal area = %0.9v\n", H, total_area)
 	uncovered_area := H * float64(m) - total_area
 	fmt.Printf("Uncovered area = %0.9v\n", uncovered_area)
-	coefficient = uncovered_area / real(cmath.Pow(cmplx(float64(n), 0), (2.0/3)))
+	coefficient = uncovered_area / real(cmath.Pow(complex(float64(n), 0), (2.0/3)))
 
 	if true == validate {
 		if false == Validate(rects) {
@@ -196,7 +196,7 @@ func main() {
 	rand.Seed(time.Nanoseconds())
 
 	println("Number of rectangles = ", *pn)
-	fmt.Printf("N^(2/3) = %0.9v\n\n", real(cmath.Pow(cmplx(float64(*pn), 0), (2.0/3))))
+	fmt.Printf("N^(2/3) = %0.9v\n\n", real(cmath.Pow(complex(float64(*pn), 0), (2.0/3))))
 
 	var coef_s float64 = 0
 	for y := 0; y < *ptimes; y++ {

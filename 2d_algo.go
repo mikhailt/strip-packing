@@ -19,7 +19,7 @@ func (v *TdAlgo) Pack(rects [][]Rect, be float64) float64 {
 	v.frame.w = 1
 	v.nrects = 0
 	n := len(a)
-	v.delta = real(cmath.Pow(cmplx(float64(n), 0), (-1.0 / 2)))
+	v.delta = real(cmath.Pow(complex(float64(n), 0), (-1.0 / 2)))
 	v.rects = make([]Rect, n)
 	
 	for y := 0; y < n; y++ {
