@@ -24,10 +24,11 @@ func (v *BinList) AddBin(b *Bin) {
 	v.m[len(v.m)] = b
 }
 
-// Packs rectangles from slice 'a' to the strip starting from lower bound 'be'
-// according to Kuzyurin-Pospelov's basic algorithm. 
+// Packs rectangles from slice 'rects' to the strip starting from lower bound 
+// 'be' according to Kuzyurin-Pospelov's basic algorithm. 
 // Returns an upper bound of resulting alignment. This algo in not quite 
 // on-line, it uses number of all the rectangles.
+// Ignores 'm' parameter since it is single strip packing algorithm.
 type Kp1Algo struct {
 	frame    Bin
 	bins     map[int]*BinList
@@ -35,32 +36,29 @@ type Kp1Algo struct {
 	d        int
 }
 
-func (v *Kp1Algo) Pack(rects [][]Rect, be float64) float64 {
-	return v.PackSingleStrip(rects[0], be)
-}
-
-func (v *Kp1Algo) PackSingleStrip(a []Rect, be float64) float64 {
-	v.frame.top = 0
-	v.frame.y = be
-	v.frame.x = 0
-	v.frame.w = 1
-
-	n := len(a)
-	v.bins = make(map[int]*BinList)
-	var j int
-	var r *Rect
-
+func (v *Kp1Algo) Init(n int) {
 	v.delta = real(cmath.Pow(complex(float64(n), 0), (-1.0 / 3)))
 	v.u = real(cmath.Pow(complex(float64(n), 0), (1.0 / 3)))
 	v.d = int(1 / (2 * v.delta))
-
-	// Initialization of bins map.
+	v.bins = make(map[int]*BinList)
 	for y := 0; y <= 2*v.d+1; y++ {
 		v.bins[y] = NewBinList()
 	}
+}
 
-	for i, _ := range a {
-		r = &a[i]
+func (v *Kp1Algo) Pack(rects []Rect, xbe, ybe float64, m int) float64 {
+	v.frame.top = 0
+	v.frame.y = ybe
+	v.frame.x = xbe
+	v.frame.w = 1
+
+	n := len(rects)
+	v.Init(n)
+	var j int
+	var r *Rect
+
+	for i := 0; i < n; i++ {
+		r = &rects[i]
 		if r.w > (1 - v.delta) {
 			PackToBin(&v.frame, r)
 			continue
@@ -100,7 +98,7 @@ func (v *Kp1Algo) PackSingleStrip(a []Rect, be float64) float64 {
 		PackToBin(b1, r)
 		b2 := v.AddBin(v.ComplType(j))
 		b2.y = b1.y
-		b2.x = b1.w
+		b2.x = b1.x + b1.w
 	}
 	return v.frame.y + v.frame.top
 }
@@ -137,12 +135,11 @@ func (v *Kp1Algo) WidthType(t int) float64 {
 // know  total number of rectangles.
 type Kp2Algo struct{}
 
-func (v *Kp2Algo) Pack(rects [][]Rect, be float64) float64 {
-	a := rects[0]
-	var kp1 Kp1Algo
+func (v *Kp2Algo) Pack(rects []Rect, xbe, ybe float64, m int) float64 {
 	var b []Rect
+	a := rects[:]
 	exit_flag := false
-	var H float64 = 0
+	var H float64 = ybe
 
 	for cnt := 2; !exit_flag; cnt *= 2 {
 		if cnt > len(a) {
@@ -152,7 +149,8 @@ func (v *Kp2Algo) Pack(rects [][]Rect, be float64) float64 {
 			b = a[:cnt]
 			a = a[cnt:]
 		}
-		H = kp1.PackSingleStrip(b, H)
+		kp1 := new(Kp1Algo)
+		H = kp1.Pack(b, xbe, H, m)
 	}
 	return H
 }

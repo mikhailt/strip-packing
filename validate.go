@@ -4,36 +4,29 @@ import (
 	"fmt"
 )
 
-func Validate(a [][]Rect) bool {
-	for y := 0; y < len(a); y++ {
-		if false == ValidateStrip(a[y]) {
-			return false
-		}
-	}
-	return true
+func (v *Rect) PrintInfo() {
+	fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n",
+		v.x, v.w, v.y, v.h)
 }
 
-// Validates that rectangles from a are packed into strip correctly. I.e. 
-// without overlapping and strictly inside half-infine strip of width 1.
+// Validates that rectangles are packed into strips correctly. I.e. without 
+// overlapping and strictly inside one of m half-infinite strips of width 1. 
 // Returns true/false depending on correctness. 
-func ValidateStrip(a []Rect) bool {
-	cnt := len(a)
+func Validate(rects []Rect, m int, H float64) bool {
+	cnt := len(rects)
 	for y := 0; y < cnt; y++ {
-		if !rect_inside_strip(&a[y]) {
+		if !rect_inside_strip(&rects[y], m, H) {
 			println("Following rectangle intersects strip borders")
-			fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n",
-				a[y].x, a[y].w, a[y].y, a[y].h)
+			rects[y].PrintInfo()
 			return false
 		}
 	}
 	for y := 0; y < cnt-1; y++ {
 		for j := y + 1; j < cnt; j++ {
-			if rects_overlap(&a[y], &a[j]) {
+			if rects_overlap(&rects[y], &rects[j]) {
 				println("Following 2 rectangles overlap")
-				fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n",
-					a[y].x, a[y].w, a[y].y, a[y].h)
-				fmt.Printf("x = %0.9v, w = %0.9v, y = %0.9v, h = %0.9v\n",
-					a[j].x, a[j].w, a[j].y, a[j].h)
+				rects[y].PrintInfo()
+				rects[j].PrintInfo()
 				return false
 			}
 		}
@@ -41,10 +34,17 @@ func ValidateStrip(a []Rect) bool {
 	return true
 }
 
-func rect_inside_strip(r *Rect) bool {
-	return !float64_less(r.x, 0) &&
-		!float64_less(1, r.x+r.w) &&
-		!float64_less(r.y, 0)
+func rect_inside_strip(r *Rect, m int, H float64) bool {
+	if float64_less(r.x, 0) || float64_less(float64(m), r.x+r.w) || 
+			float64_less(r.y, 0) || float64_less(H, r.y + r.h) {
+		return false
+	}
+	for y := 1; y < m; y++ {
+		if float64_less(r.x, float64(y)) && float64_less(float64(y), r.x+r.w) {
+			return false
+		}
+	}
+	return true
 }
 
 // Returns true in case two rectangles have non-zero common area regards to 

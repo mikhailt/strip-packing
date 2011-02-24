@@ -11,19 +11,18 @@ type TdAlgo struct {
 	nrects int
 }
 
-func (v *TdAlgo) Pack(rects [][]Rect, be float64) float64 {
-	a := rects[0]
+func (v *TdAlgo) Pack(rects []Rect, xbe, ybe float64, m int) float64 {
 	v.frame.top = 0
-	v.frame.y = be
-	v.frame.x = 0
+	v.frame.y = ybe
+	v.frame.x = xbe
 	v.frame.w = 1
 	v.nrects = 0
-	n := len(a)
+	n := len(rects)
 	v.delta = real(cmath.Pow(complex(float64(n), 0), (-1.0 / 2)))
 	v.rects = make([]Rect, n)
 	
 	for y := 0; y < n; y++ {
-		r := &a[y]
+		r := &rects[y]
 		var best_r *Rect = nil
 		var best_s float64 = 0
 		var best_vertical bool
