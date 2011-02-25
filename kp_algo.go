@@ -2,6 +2,8 @@ package main
 
 import (
 	"cmath"
+	"container/vector"
+	"container/heap"
 )
 
 type Bin struct {
@@ -10,18 +12,20 @@ type Bin struct {
 	t   int
 }
 
-type BinList struct {
-	m map[int]*Bin
+type HeapElemLike interface {
+	VacantSpace() float64
 }
 
-func NewBinList() *BinList {
-	bl := new(BinList)
-	bl.m = make(map[int]*Bin)
-	return bl
+type HeapElem struct {
+	p *Bin
 }
 
-func (v *BinList) AddBin(b *Bin) {
-	v.m[len(v.m)] = b
+func (v *HeapElem) VacantSpace() float64 {
+	return v.p.h - v.p.top
+}
+
+func (v *HeapElem) Less(x interface{}) bool {
+	return v.VacantSpace() > x.(HeapElemLike).VacantSpace()
 }
 
 // Packs rectangles from slice 'rects' to the strip starting from lower bound 
@@ -31,7 +35,7 @@ func (v *BinList) AddBin(b *Bin) {
 // Ignores 'm' parameter since it is single strip packing algorithm.
 type Kp1Algo struct {
 	frame    Bin
-	bins     map[int]*BinList
+	bins     map[int]*vector.Vector
 	delta, u float64
 	d        int
 }
@@ -40,9 +44,10 @@ func (v *Kp1Algo) Init(n int) {
 	v.delta = real(cmath.Pow(complex(float64(n), 0), (-1.0 / 3)))
 	v.u = real(cmath.Pow(complex(float64(n), 0), (1.0 / 3)))
 	v.d = int(1 / (2 * v.delta))
-	v.bins = make(map[int]*BinList)
+	v.bins = make(map[int]*vector.Vector)
 	for y := 0; y <= 2*v.d+1; y++ {
-		v.bins[y] = NewBinList()
+		vec := make(vector.Vector, 0)
+		v.bins[y] = &vec
 	}
 }
 
@@ -54,53 +59,65 @@ func (v *Kp1Algo) Pack(rects []Rect, xbe, ybe float64, m int) float64 {
 
 	n := len(rects)
 	v.Init(n)
-	var j int
-	var r *Rect
 
 	for i := 0; i < n; i++ {
-		r = &rects[i]
+		r := &rects[i]
 		if r.w > (1 - v.delta) {
 			PackToBin(&v.frame, r)
 			continue
 		}
-		// Determining type of the current rectangle.
-		j = 0
-		for y := 1; y <= v.d; y++ {
-			if r.w <= (v.delta * float64(y)) {
-				j = y
-				break
-			}
-		}
-		if 0 == j {
-			for y := v.d; y >= 1; y-- {
-				if r.w <= (1 - v.delta*float64(y)) {
-					j = v.d*2 - y + 1
-					break
-				}
-			}
-		}
-		// Finding suitable opened bin for current rectangle.
-		bin_found := false
-		for _, b := range v.bins[j].m {
-			if (b.h - b.top) >= r.h {
-				PackToBin(b, r)
-				bin_found = true
-				break
-			}
-		}
-		if bin_found {
+		
+		j := v.RectType(r)
+		if v.PackToTopBin(r, j) {
 			continue
 		}
 		// Opening pair of new bins and packing current rectangle into corresponging
 		// one.
-		b1 := v.AddBin(j)
-		PackToBin(&v.frame, &b1.Rect)
-		PackToBin(b1, r)
-		b2 := v.AddBin(v.ComplType(j))
-		b2.y = b1.y
-		b2.x = b1.x + b1.w
+		v.PackToNewShelfInFrame(r, &v.frame, j)
 	}
 	return v.frame.y + v.frame.top
+}
+
+// Returns true/false whether rectangle was packed into top-of-the-heap bin.
+func (v *Kp1Algo) PackToTopBin(r *Rect, j int) bool {
+	if 0 == len(*v.bins[j]) {
+		return false
+	}
+	he := heap.Pop(v.bins[j]).(*HeapElem)
+	defer heap.Push(v.bins[j], he)
+	if he.VacantSpace() >= r.h {
+		PackToBin(he.p, r)
+		return true
+	}
+	return false
+}
+
+func (v *Kp1Algo) RectType(r *Rect) int {
+	j := int(0)
+	for y := 1; y <= v.d; y++ {
+		if r.w <= (v.delta * float64(y)) {
+			j = y
+			break
+		}
+	}
+	if 0 == j {
+		for y := v.d; y >= 1; y-- {
+			if r.w <= (1 - v.delta*float64(y)) {
+				j = v.d*2 - y + 1
+				break
+			}
+		}
+	}
+	return j
+}
+
+func (v *Kp1Algo) PackToNewShelfInFrame(r *Rect, f *Bin, j int) {
+	b1 := v.AddBin(j)
+	PackToBin(f, &b1.Rect)
+	PackToBin(b1, r)
+	b2 := v.AddBin(v.ComplType(j))
+	b2.y = b1.y
+	b2.x = b1.x + b1.w
 }
 
 func (v *Kp1Algo) AddBin(t int) *Bin {
@@ -109,7 +126,7 @@ func (v *Kp1Algo) AddBin(t int) *Bin {
 	b.w = v.WidthType(t)
 	b.top = 0
 	b.t = t
-	v.bins[t].AddBin(b)
+	heap.Push(v.bins[t], &HeapElem{b})
 	return b
 }
 

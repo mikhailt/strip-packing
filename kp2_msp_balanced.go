@@ -1,5 +1,9 @@
 package main
 
+import (
+	"container/heap"
+)
+
 type Kp2MspBalancedAlgo struct {
 	frames []Bin
 	Kp1Algo
@@ -22,6 +26,22 @@ func (v *Kp2MspBalancedAlgo) Pack(rects []Rect, xbe, ybe float64, m int) float64
 		v.PackWithSize(b, xbe, ybe, m)
 		s += len(b)
 		v.RecalcFrames(rects[:s], m)
+		// Dirty hack to make it possible to render bins, initial interface does
+		// not have corresponding mechanism.
+		if *prenderbins {
+			if nil == bins_to_render {
+				bins_to_render = make([]*Rect, 0)
+			}
+			for j := 0; j < v.d*2 + 1; j++ {
+				for ; ; {
+					if 0 == len(*v.bins[j]) {
+						break
+					}
+					bins_to_render = append(bins_to_render, &heap.Pop(v.bins[j]).(*HeapElem).p.Rect)
+				}
+			}
+		}
+		// End of hack.
 	}
 	ans := float64(0)
 	n := len(rects)
@@ -51,42 +71,15 @@ func (v *Kp2MspBalancedAlgo) PackWithSize(rects []Rect, xbe, ybe float64, m int)
 			PackToBin(&v.frames[lowest], r)
 			continue
 		}
-		// Determining type of the current rectangle and keep it at 'j'.
-		j := int(0)
-		for y := 1; y <= v.d; y++ {
-			if r.w <= (v.delta * float64(y)) {
-				j = y
-				break
-			}
-		}
-		if 0 == j {
-			for y := v.d; y >= 1; y-- {
-				if r.w <= (1 - v.delta*float64(y)) {
-					j = v.d*2 - y + 1
-					break
-				}
-			}
-		}
-		// Finding suitable opened bin for current rectangle.
-		bin_found := false
-		for _, b := range v.bins[j].m {
-			if (b.h - b.top) >= r.h {
-				PackToBin(b, r)
-				bin_found = true
-				break
-			}
-		}
-		if bin_found {
+
+		j := v.RectType(r)
+		if v.PackToTopBin(r, j) {
 			continue
 		}
 		// Opening pair of new bins and packing current rectangle into corresponging
 		// one.
-		b1 := v.AddBin(j)
-		PackToBin(&v.frames[lowest], &b1.Rect)
-		PackToBin(b1, r)
-		b2 := v.AddBin(v.ComplType(j))
-		b2.y = b1.y
-		b2.x = b1.x + b1.w
+		v.PackToNewShelfInFrame(r, &v.frames[lowest], j)
+		
 	}
 }
 

@@ -91,6 +91,8 @@ func render_all(rects []Rect, m int) {
 }
 
 var pnonsolid *bool
+var prenderbins *bool
+var bins_to_render []*Rect = nil
 
 func draw_all(rects []Rect, m int) {
 	strip_width := W / float64(m)
@@ -105,5 +107,14 @@ func draw_all(rects []Rect, m int) {
 		r.w *= strip_width
 		r.x *= strip_width
 		r.Draw(!*pnonsolid)
+	}
+	if *prenderbins {
+		gc.SetRgbFgColor(gdk.Color("red"))
+		for _, r := range bins_to_render {
+			r.w *= strip_width
+			r.x *= strip_width
+			r.Draw(false)
+		}
+		gc.SetRgbFgColor(gdk.Color("black"))
 	}
 }

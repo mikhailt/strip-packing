@@ -78,6 +78,7 @@ func run(n int, render, validate bool, algo_name string, m int) (coefficient flo
 
 func main() {
 	prender := flag.Bool("r", false, "Render resulting alignment of all the rectangles")
+	prenderbins = flag.Bool("rb", false, "Render bins")
 	pnonsolid = flag.Bool("ns", false, "Non solid rendering of rectangles")
 	pn := flag.Int("n", 100, "Number of rectangles")
 	pm := flag.Int("m", 1, "Number of strips")
