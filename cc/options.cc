@@ -1,5 +1,3 @@
-#include <cstdlib>
-
 #include "strip_packing.h"
 
 void Options::Parse(int argc, char** argv) {
@@ -20,6 +18,8 @@ void Options::Parse(int argc, char** argv) {
     } else if (0 == strcmp("-t", argv[y])) {
       ++y;
       t = atoi(argv[y]);
+    } else if (0 == strcmp("-rb", argv[y])) {
+      render_bins = true;
     }
   }
   save_rects = render || validate;

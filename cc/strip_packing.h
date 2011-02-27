@@ -1,6 +1,7 @@
 #ifndef __STRIP_PACKING_H__
 #define __STRIP_PACKING_H__
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -20,6 +21,9 @@ struct Rect {
   double x, y, w, h;
   Rect() {}
   Rect(double x, double y, double w, double h) : x(x), y(y), w(w), h(h) {}
+  inline void PrintInfo() {
+    std::cout << "x,y,w,h = " << x << " " << y << " " << w << " " << h << "\n";
+  }
 };
 
 struct Bin : public Rect {
@@ -37,9 +41,18 @@ typedef RectVec::iterator RectIter;
 struct Context;
 double rand_double();
 
+struct SavedRect {
+  Rect r;
+  std::string color;
+  bool solid;
+  SavedRect(Rect r, std::string c, bool s) : r(r), color(c), solid(s) {}
+};
+
 class Algorithm {
  public:
+  std::vector<SavedRect> saved_rects;
   double total_area;
+  double solution_height;
   virtual double Pack(int n, double xbe, double ybe, Context* context) = 0;
   inline void NextRect(Rect* r) {
     r->h = rand_double();
@@ -61,22 +74,23 @@ struct Options {
   int m;
   int t;
   bool render;
+  bool render_bins;
   bool validate;
   bool save_rects;
   std::string algo;
-  Options() : n(100), m(1), render(false), algo("kp2"), validate(false), 
-    save_rects(false), t(1) {}
+  Options() : n(100), m(1), render(false), render_bins(false), algo("kp2"), 
+    validate(false), save_rects(false), t(1) {}
   void Parse(int argc, char** argv);
 };
 
 struct Context {
-  RectVec vec;
   Algorithm* algo;
   Renderer* ren;
   Options opt;
   Context(int argc, char** argv);
   void InitAlgo(std::string name);
   void Render();
+  void Validate();
 };
 
 // Algorithms definitions.
@@ -86,7 +100,6 @@ typedef std::set<Bin> SetOfBins;
 
 class Kp1Algo : public Algorithm {
  public:
-  std::vector<Rect> saved_rects;
   double Pack(int n, double xbe, double ybe, Context* context);
   void InitParams(int n);
   int RectType(Rect* r);
@@ -94,6 +107,7 @@ class Kp1Algo : public Algorithm {
   double WidthType(int t);
   void PackToNewShelfInFrame(Rect* r, Bin* f, int j);
   bool PackToTopBin(Rect* r, int j);
+  void SaveBins(Context* context);
 
  private:
   MapOfSets bins_;

@@ -1,6 +1,3 @@
-#include <cstdlib>
-#include <ctime>
-
 #include "strip_packing.h"
 
 //void Algorithm::CountRect(Rect* rect) {
@@ -27,18 +24,31 @@ double Kp1Algo::Pack(int n, double xbe, double ybe, Context* context) {
     NextRect(&r);
     if (r.w > (1 - delta_)) {
       PackToBin(&frame_, &r);
-      continue;
+    } else {
+      int j = RectType(&r);
+      if (!PackToTopBin(&r, j)) {
+        PackToNewShelfInFrame(&r, &frame_, j);
+      }
     }
-    int j = RectType(&r);
-    if (PackToTopBin(&r, j)) {
-      continue;
-    }
-    PackToNewShelfInFrame(&r, &frame_, j);
     if (context->opt.save_rects) {
-      saved_rects.push_back(r);
+      saved_rects.push_back(SavedRect(r, "black", true));
     }
   }
-  return frame_.y + frame_.top;
+  SaveBins(context);
+  solution_height = frame_.y + frame_.top;
+  return solution_height;
+}
+
+void Kp1Algo::SaveBins(Context* context) {
+  if (!context->opt.render_bins) {
+    return;
+  }
+  SetOfBins::iterator i;
+  for (int y = 0; y <= d_ * 2 + 1; ++y) {
+    for (i = bins_[y].begin(); i != bins_[y].end(); ++i) {
+      saved_rects.push_back(SavedRect(*i, "red", false));
+    }
+  }
 }
 
 void Kp1Algo::InitParams(int n) {

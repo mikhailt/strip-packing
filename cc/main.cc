@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
     double coef = vacant_area / divisor;
     std::cout << "coefficient = " << coef << "\n";
     coef_s += coef;
+    context.Validate();
   }
   context.Render();
   std::cout << "Average coef = " << coef_s / double(context.opt.t) << "\n";
