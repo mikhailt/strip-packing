@@ -21,5 +21,5 @@ void Context::Render() {
     return;
   }
   ren = new Renderer;
-  ren->Init(this);
+  ren->ShowAll(this);
 }

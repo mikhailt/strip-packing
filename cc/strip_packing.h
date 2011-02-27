@@ -11,8 +11,8 @@
 #include <string>
 #include <vector>
 
+#include <cairo.h>
 #include <gtk/gtk.h>
-#include <gdk/gdk.h>
 
 // Main classes.
 
@@ -51,14 +51,9 @@ class Algorithm {
 class Renderer {
  public:
   GtkWidget* window_;
-  GtkWidget* drawing_area_;
-  GtkWidget* vbox_;
-  GdkPixmap* pixmap_;
-  GdkGC* gc_;
-  GdkDrawable* drawable_;
+  cairo_t* cairo_;
   
-  void Init(Context* context);
-  void DrawRects(std::vector<Rect>* rects, bool solid, std::string color);
+  void ShowAll(Context* context);
 };
 
 struct Options {
@@ -91,6 +86,7 @@ typedef std::set<Bin> SetOfBins;
 
 class Kp1Algo : public Algorithm {
  public:
+  std::vector<Rect> saved_rects;
   double Pack(int n, double xbe, double ybe, Context* context);
   void InitParams(int n);
   int RectType(Rect* r);
@@ -104,7 +100,6 @@ class Kp1Algo : public Algorithm {
   double delta_, u_;
   int d_;
   Bin frame_;
-  std::vector<Rect> saved_rects;
 };
 
 // Utility inline functions.
