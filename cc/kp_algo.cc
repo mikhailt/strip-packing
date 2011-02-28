@@ -9,7 +9,13 @@ double Bin::VacantSpace() const {
 }
 
 bool operator< (const Bin& a, const Bin& b) {
-  return a.VacantSpace() > b.VacantSpace();
+  if (a.VacantSpace() > b.VacantSpace()) {
+    return true;
+  }
+  if (a.VacantSpace() < b.VacantSpace()) {
+    return false;
+  }
+  return (a.x < b.x);
 }
 
 double Kp1Algo::Pack(int n, double xbe, double ybe, Context* context) {
@@ -52,7 +58,6 @@ void Kp1Algo::SaveBins(Context* context) {
 }
 
 void Kp1Algo::InitParams(int n) {
-  saved_rects.clear();
   bins_.clear();
   delta_ = pow(double(n), -1.0 / 3.0);
   u_ = pow(double(n), 1.0 / 3.0);
@@ -92,8 +97,8 @@ int Kp1Algo::RectType(Rect* r) {
 
 void Kp1Algo::PackToNewShelfInFrame(Rect* r, Bin* f, int j) {
   int cj = ComplType(j);
-  Bin b1(WidthType(j), u_, j, 0);
-  Bin b2(WidthType(cj), u_, cj, 0);
+  Bin b1(WidthType(j), u_, 0);
+  Bin b2(WidthType(cj), u_, 0);
   PackToBin(f, &b1);
   PackToBin(&b1, r);
   b2.y = b1.y;

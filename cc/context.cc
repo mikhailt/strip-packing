@@ -11,6 +11,8 @@ Context::Context(int argc, char** argv) {
 void Context::InitAlgo(std::string name) {
   if ("kp1" == name) {
     algo = new Kp1Algo;
+  } else if ("kp2_msp_b" == name) {
+    algo = new Kp2MspBalanced;
   }
 }
 

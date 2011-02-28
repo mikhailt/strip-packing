@@ -27,11 +27,10 @@ struct Rect {
 };
 
 struct Bin : public Rect {
-  int t;
   double top;
   Bin() {}
-  Bin(double w, double h, int t, double top, double x = 0, double y = 0) : 
-      Rect(x, y, w, h), t(t), top(top) {}
+  Bin(double w, double h, double top, double x = 0, double y = 0) : 
+      Rect(x, y, w, h), top(top) {}
   double VacantSpace() const;
 };
 
@@ -78,7 +77,7 @@ struct Options {
   bool validate;
   bool save_rects;
   std::string algo;
-  Options() : n(100), m(1), render(false), render_bins(false), algo("kp2"), 
+  Options() : n(100), m(1), render(false), render_bins(false), algo("kp1"), 
     validate(false), save_rects(false), t(1) {}
   void Parse(int argc, char** argv);
 };
@@ -100,7 +99,7 @@ typedef std::set<Bin> SetOfBins;
 
 class Kp1Algo : public Algorithm {
  public:
-  double Pack(int n, double xbe, double ybe, Context* context);
+  virtual double Pack(int n, double xbe, double ybe, Context* context);
   void InitParams(int n);
   int RectType(Rect* r);
   int ComplType(int t);
@@ -109,11 +108,21 @@ class Kp1Algo : public Algorithm {
   bool PackToTopBin(Rect* r, int j);
   void SaveBins(Context* context);
 
- private:
+ protected:
   MapOfSets bins_;
   double delta_, u_;
   int d_;
   Bin frame_;
+};
+
+class Kp2MspBalanced : public Kp1Algo {
+ public:
+  double Pack(int n, double xbe, double ybe, Context* context);
+  void PackWithSize(int n, double xbe, double ybe, Context* context);
+  void InitFrames(double xbe, double ybe, int m);
+
+ private:
+  std::set<Bin> frames_;
 };
 
 // Utility inline functions.

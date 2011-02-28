@@ -2,8 +2,8 @@
 
 static double max_x;
 static double max_y;
-static const double X = 1230;
-static const double Y = 960;
+static const double X = 1270;
+static const double Y = 970;
 
 double cx(double x) {
   return (x / max_x) * X;
@@ -32,7 +32,7 @@ gboolean expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
   cairo_set_line_width(cairo, 0.5);
   cairo_set_source_rgb(cairo, 0, 0, 0);
 
-  max_x = std::max<double>(context->opt.m, 6);
+  max_x = std::max<double>(context->opt.m, 5);
   max_y = context->algo->solution_height;
 
   for (int y = 0; y < context->opt.m; ++y) {
