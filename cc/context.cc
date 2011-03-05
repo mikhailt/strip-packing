@@ -13,6 +13,8 @@ void Context::InitAlgo(std::string name) {
     algo = new Kp1Algo;
   } else if ("kp2_msp_b" == name) {
     algo = new Kp2MspBalanced;
+  } else if ("pyramid" == name) {
+    algo = new PyramidAlgo;
   }
 }
 
@@ -28,16 +30,6 @@ struct Segment {
   double x, y;
   Segment(double x, double y) : x(x), y(y) {}
 };
-
-static const double D = 1e-8;
-
-bool double_less(double a, double b) {
-  return (a + D) <= b;
-}
-
-bool double_eq(double a, double b) {
-  return !double_less(a, b) && !double_less(b, a);
-}
 
 bool point_inside_segment(double a, Segment* b) {
   return double_less(b->x, a) && double_less(a, b->y);

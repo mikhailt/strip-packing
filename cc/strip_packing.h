@@ -52,12 +52,22 @@ class Algorithm {
   std::vector<SavedRect> saved_rects;
   double total_area;
   double solution_height;
+  Algorithm() : total_area(0) {}
   virtual double Pack(int n, double xbe, double ybe, Context* context) = 0;
   inline void NextRect(Rect* r) {
     r->h = rand_double();
     r->w = rand_double();
     total_area += r->w * r->h;
-  } 
+  }
+  inline void SaveRect(Rect* r) {
+    saved_rects.push_back(SavedRect(*r, "black", true));
+  }
+  inline void RecalcSolutionHeight() {
+    for (std::vector<SavedRect>::iterator i = saved_rects.begin(); 
+         i != saved_rects.end(); ++i) {
+      solution_height = std::max<double>(solution_height, i->r.y + i->r.h);
+    }
+  }
 };
 
 class Renderer {
@@ -76,9 +86,10 @@ struct Options {
   bool render_bins;
   bool validate;
   bool save_rects;
+  bool sqrt_divisor;
   std::string algo;
   Options() : n(100), m(1), render(false), render_bins(false), algo("kp1"), 
-    validate(false), save_rects(false), t(1) {}
+    validate(false), save_rects(false), t(1), sqrt_divisor(false) {}
   void Parse(int argc, char** argv);
 };
 
@@ -125,7 +136,20 @@ class Kp2MspBalanced : public Kp1Algo {
   std::set<Bin> frames_;
 };
 
-// Utility inline functions.
+class PyramidAlgo : public Algorithm {
+ public:
+  double Pack(int n, double xbe, double ybe, Context* context);
+  void ConvertCooToComplPyramid(Rect* r);
+  void PackOnTop(Rect* r);
+  bool PackToPyramid(std::set<Rect>* s, Rect* r);
+
+ private:
+  double shift_;
+  double h_;
+  double top_h_;
+};
+
+// Utility & inline functions.
 
 inline double rand_double() {
   return rand()/(float(RAND_MAX) + 1);
@@ -135,6 +159,14 @@ inline void PackToBin(Bin *bin, Rect* r) {
 	r->x = bin->x;
 	r->y = bin->y + bin->top;
 	bin->top += r->h;
+}
+
+inline bool double_less(double a, double b) {
+  return (a + 1e-8) <= b;
+}
+
+inline bool double_eq(double a, double b) {
+  return !double_less(a, b) && !double_less(b, a);
 }
 
 #endif  // __STRIP_PACKING_H__

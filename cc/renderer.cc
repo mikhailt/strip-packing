@@ -29,7 +29,7 @@ gboolean expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
   Context* context = (Context*)(data);
   cairo_t* cairo = gdk_cairo_create(widget->window);
   cairo_set_source_rgb(cairo, 0, 0, 0);
-  cairo_set_line_width(cairo, 0.5);
+  cairo_set_line_width(cairo, 1);
   cairo_set_source_rgb(cairo, 0, 0, 0);
 
   max_x = std::max<double>(context->opt.m, 5);

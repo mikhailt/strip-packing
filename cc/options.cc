@@ -20,6 +20,8 @@ void Options::Parse(int argc, char** argv) {
       t = atoi(argv[y]);
     } else if (0 == strcmp("-rb", argv[y])) {
       render_bins = true;
+    } else if (0 == strcmp("-sqrt_divisor", argv[y])) {
+      sqrt_divisor = true;
     }
   }
   save_rects = render || validate;

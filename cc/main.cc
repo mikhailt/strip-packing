@@ -7,9 +7,19 @@ int main(int argc, char** argv) {
   std::cout << std::setprecision(4);
   Context context(argc, argv);
   double coef_s = 0;
-  double divisor = pow(context.opt.n, 2.0 / 3.0);
+  double divisor;
+  if (context.opt.sqrt_divisor) {
+    divisor = pow(context.opt.n, 1.0 / 2.0);
+  } else {
+    divisor = pow(context.opt.n, 2.0 / 3.0);
+  }
   std::cout << "n = " << context.opt.n << "\n";
-  std::cout << "n^(2/3) = " << divisor << "\n";
+  if (context.opt.sqrt_divisor)  {
+    std::cout << "n^(1/2) = ";
+  } else {
+    std::cout << "n^(2/3) = ";
+  }
+  std::cout << divisor << "\n";
   for (int y = 0; y < context.opt.t; ++y) {
     context.InitAlgo(context.opt.algo);
     std::cout << "=============\niteration " << y << "\n=============\n";
