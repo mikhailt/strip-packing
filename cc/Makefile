@@ -8,4 +8,5 @@ strip_packing: *.cc *.h
 	$C -O2 *.cc -o strip_packing `pkg-config --cflags --libs gtk+-2.0`
 
 debug: *.cc *.h
+	rm ./strip_packing
 	$C -g *.cc -o strip_packing `pkg-config --cflags --libs gtk+-2.0` -pg

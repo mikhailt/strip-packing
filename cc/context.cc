@@ -8,14 +8,18 @@ Context::Context(int argc, char** argv) {
   opt.Parse(argc, argv);
 }
 
-void Context::InitAlgo(std::string name) {
-  if ("kp1" == name) {
+void Context::InitAlgo() {
+  if ("kp1" == opt.algo) {
     algo = new Kp1Algo;
-  } else if ("kp2_msp_b" == name) {
+  } else if ("kp2_msp_b" == opt.algo) {
     algo = new Kp2MspBalanced;
-  } else if ("pyramid" == name) {
+  } else if ("pyramid" == opt.algo) {
     algo = new PyramidAlgo;
   }
+}
+
+void Context::DestroyAlgo() {
+  delete algo;
 }
 
 void Context::Render() {
@@ -63,11 +67,10 @@ bool rect_inside_strip(Rect* r, int m, double H) {
   return true;
 }
 
-void Context::Validate() {
+bool Context::Validate() {
   if (!opt.validate) {
-    return;
+    return true;
   }
-  std::cout << "Validation: ";
   std::vector<SavedRect>::iterator i;
   for (i = algo->saved_rects.begin(); i != algo->saved_rects.end(); ++i) {
     if (i->color == "red") {
@@ -77,7 +80,7 @@ void Context::Validate() {
       std::cout << "FAIL\n";
       std::cout << "Following rectangle intersects strip borders\n";
       i->r.PrintInfo();
-      return;
+      return false;
     }
   }
   for (int y = 0; y < algo->saved_rects.size() - 1; ++y) {
@@ -93,9 +96,9 @@ void Context::Validate() {
         std::cout << "Following 2 rectangles overlap\n";
         algo->saved_rects[y].r.PrintInfo();
         algo->saved_rects[j].r.PrintInfo();
-        return;
+        return false;
       }
     }
   }
-  std::cout << "OK\n";
+  return true;
 }

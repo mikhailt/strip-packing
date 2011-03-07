@@ -28,7 +28,7 @@ void* PackToPyramidThreadSpawn(void* arg) {
   return NULL;
 }*/
 
-double PyramidAlgo::Pack(int n, double xbe, double ybe, Context* context) {
+void PyramidAlgo::Pack(int n, double xbe, double ybe, Context* context) {
   shift_ = pow(n, 0.5);
   h_ = n / 4;
   top_h_ = 0;
@@ -77,14 +77,15 @@ double PyramidAlgo::Pack(int n, double xbe, double ybe, Context* context) {
       ConvertCooToComplPyramid(&r, best_ind);
     }
     
-    SaveRect(&r);
+    if (context->opt.save_rects) {
+      SaveRect(&r);
+    }
+    RecalcSolutionHeightSingle(&r);
   }
-  RecalcSolutionHeight();
   if (context->opt.render_bins) {
     saved_rects.push_back(
         SavedRect(Rect(0, 0, 1, h_ + 2 * shift_), "red", false));
   }
-  return solution_height;
 }
 
 void AppendAtBottom(std::set<Rect>* s, std::set<Rect>::iterator* i, Rect* r) {

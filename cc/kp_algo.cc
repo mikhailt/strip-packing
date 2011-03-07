@@ -18,7 +18,7 @@ bool operator< (const Bin& a, const Bin& b) {
   return (a.x < b.x);
 }
 
-double Kp1Algo::Pack(int n, double xbe, double ybe, Context* context) {
+void Kp1Algo::Pack(int n, double xbe, double ybe, Context* context) {
   frame_.top = 0;
   frame_.y = ybe;
   frame_.x = xbe;
@@ -42,7 +42,6 @@ double Kp1Algo::Pack(int n, double xbe, double ybe, Context* context) {
   }
   SaveBins(context);
   solution_height = frame_.y + frame_.top;
-  return solution_height;
 }
 
 void Kp1Algo::SaveBins(Context* context) {

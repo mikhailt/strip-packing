@@ -27,7 +27,7 @@ void Kp2MspBalanced::PackWithSize(int n, double xbe, double ybe, Context* contex
   SaveBins(context);
 }
 
-double Kp2MspBalanced::Pack(int n, double xbe, double ybe, Context* context) {
+void Kp2MspBalanced::Pack(int n, double xbe, double ybe, Context* context) {
   solution_height = ybe;
   InitFrames(xbe, ybe, context->opt.m);
   int s = 0;
@@ -36,7 +36,6 @@ double Kp2MspBalanced::Pack(int n, double xbe, double ybe, Context* context) {
     s += cur_n;
     PackWithSize(cur_n, xbe, ybe, context);
   }
-  return solution_height;
 }
 
 bool operator< (const Bin& a, const Bin& b);

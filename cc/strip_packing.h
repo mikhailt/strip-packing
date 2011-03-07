@@ -52,8 +52,8 @@ class Algorithm {
   std::vector<SavedRect> saved_rects;
   double total_area;
   double solution_height;
-  Algorithm() : total_area(0) {}
-  virtual double Pack(int n, double xbe, double ybe, Context* context) = 0;
+  Algorithm() : total_area(0), solution_height(0) {}
+  virtual void Pack(int n, double xbe, double ybe, Context* context) = 0;
   inline void NextRect(Rect* r) {
     r->h = rand_double();
     r->w = rand_double();
@@ -62,10 +62,13 @@ class Algorithm {
   inline void SaveRect(Rect* r) {
     saved_rects.push_back(SavedRect(*r, "black", true));
   }
+  inline void RecalcSolutionHeightSingle(Rect* r) {
+    solution_height = std::max<double>(solution_height, r->y + r->h);
+  }
   inline void RecalcSolutionHeight() {
     for (std::vector<SavedRect>::iterator i = saved_rects.begin(); 
          i != saved_rects.end(); ++i) {
-      solution_height = std::max<double>(solution_height, i->r.y + i->r.h);
+      RecalcSolutionHeightSingle(&i->r);
     }
   }
 };
@@ -98,9 +101,10 @@ struct Context {
   Renderer* ren;
   Options opt;
   Context(int argc, char** argv);
-  void InitAlgo(std::string name);
+  void InitAlgo();
+  void DestroyAlgo();
   void Render();
-  void Validate();
+  bool Validate();
 };
 
 // Algorithms definitions.
@@ -110,7 +114,7 @@ typedef std::set<Bin> SetOfBins;
 
 class Kp1Algo : public Algorithm {
  public:
-  virtual double Pack(int n, double xbe, double ybe, Context* context);
+  virtual void Pack(int n, double xbe, double ybe, Context* context);
   void InitParams(int n);
   int RectType(Rect* r);
   int ComplType(int t);
@@ -128,7 +132,7 @@ class Kp1Algo : public Algorithm {
 
 class Kp2MspBalanced : public Kp1Algo {
  public:
-  double Pack(int n, double xbe, double ybe, Context* context);
+  void Pack(int n, double xbe, double ybe, Context* context);
   void PackWithSize(int n, double xbe, double ybe, Context* context);
   void InitFrames(double xbe, double ybe, int m);
 
@@ -145,7 +149,7 @@ struct PyramidPos {
 
 class PyramidAlgo : public Algorithm {
  public:
-  double Pack(int n, double xbe, double ybe, Context* context);
+  void Pack(int n, double xbe, double ybe, Context* context);
   void ConvertCooToComplPyramid(Rect* r, int ind);
   void PackOnTop(Rect* r);
   PyramidPos PackToPyramid(std::set<Rect>* s, Rect* r);
