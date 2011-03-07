@@ -136,12 +136,20 @@ class Kp2MspBalanced : public Kp1Algo {
   std::set<Bin> frames_;
 };
 
+struct PyramidPos {
+  std::set<Rect>::iterator i;
+  double pos;
+  PyramidPos() {}
+  PyramidPos(std::set<Rect>::iterator i, double pos) : i(i), pos(pos) {}
+};
+
 class PyramidAlgo : public Algorithm {
  public:
   double Pack(int n, double xbe, double ybe, Context* context);
-  void ConvertCooToComplPyramid(Rect* r);
+  void ConvertCooToComplPyramid(Rect* r, int ind);
   void PackOnTop(Rect* r);
-  bool PackToPyramid(std::set<Rect>* s, Rect* r);
+  PyramidPos PackToPyramid(std::set<Rect>* s, Rect* r);
+  void PerformPacking(std::set<Rect>* s, PyramidPos* p, Rect* r);
 
  private:
   double shift_;
