@@ -58,8 +58,8 @@ void Kp1Algo::SaveBins(Context* context) {
 
 void Kp1Algo::InitParams(int n) {
   bins_.clear();
-  delta_ = pow(double(n), -1.0 / 3.0);
-  u_ = pow(double(n), 1.0 / 3.0);
+  delta_ = powl(double(n), -1.0 / 3.0);
+  u_ = powl(double(n), 1.0 / 3.0);
   d_ = int(1.0 / (2 * delta_));
 }
 

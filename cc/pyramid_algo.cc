@@ -1,65 +1,16 @@
-/*#include <semaphore.h>*/
-
 #include "strip_packing.h"
 
-/*sem_t sem;
-sem_t host_sem;
-
-struct PackToPyramidContext {
-  PyramidAlgo* a;
-  PyramidPos* pos;
-  std::set<Rect>* s;
-  Rect* r;
-  PackToPyramidContext(PyramidAlgo* a, PyramidPos* pos, std::set<Rect>* s, 
-                       Rect* r) : a(a), pos(pos), s(s), r(r) {}
-};
-
-void* PackToPyramidThreadSpawn(void* arg) {
-  for (;;) {
-    if (-1 == sem_wait(&sem)) {
-      std::cout << "worker: error on sem_wait\n";
-    }
-    PackToPyramidContext* c = reinterpret_cast<PackToPyramidContext*>(arg);
-    *c->pos = c->a->PackToPyramid(c->s, c->r);
-    if (-1 == sem_post(&host_sem)) {
-      std::cout << "worker: error on sem_wait\n";
-    }
-  }
-  return NULL;
-}*/
-
 void PyramidAlgo::Pack(int n, double xbe, double ybe, Context* context) {
-  shift_ = pow(n, 0.5);
-  h_ = n / 4;
-  top_h_ = 0;
-
+  InitParams(n);
+  
   Rect r;
   std::set<Rect> s[2];
   PyramidPos p[2];
   int best_ind;
   double best_pos;
-  pthread_t th[2];
-  
-  /*sem_init(&sem, 0, 0);
-  sem_init(&host_sem, 0, 0);
-  PackToPyramidContext c0(this, &p[0], &s[0], &r);
-  PackToPyramidContext c1(this, &p[1], &s[1], &r);
-  pthread_create(&th[0], NULL, PackToPyramidThreadSpawn, &c0);
-  pthread_create(&th[1], NULL, PackToPyramidThreadSpawn, &c1);*/
   
   for (int y = 0; y < n; ++y) {
     NextRect(&r);
-    
-    /*for (int j = 0; j < 2; ++j) {
-      if (-1 == sem_post(&sem)) {
-        std::cout << "host: error on sem_post\n";
-      }
-    }
-    for (int j = 0; j < 2; ++j) {
-      if (-1 == sem_wait(&host_sem)) {
-        std::cout << "host: error on sem_wait\n";
-      }
-    }*/
     
     p[0] = PackToPyramid(&s[0], &r);
     p[1] = PackToPyramid(&s[1], &r);
@@ -86,6 +37,12 @@ void PyramidAlgo::Pack(int n, double xbe, double ybe, Context* context) {
     saved_rects.push_back(
         SavedRect(Rect(0, 0, 1, h_ + 2 * shift_), "red", false));
   }
+}
+
+void PyramidAlgo::InitParams(int n) {
+  shift_ = powl(n, 0.5);
+  h_ = n / 4;
+  top_h_ = 0;
 }
 
 void AppendAtBottom(std::set<Rect>* s, std::set<Rect>::iterator* i, Rect* r) {

@@ -31,6 +31,7 @@ struct Bin : public Rect {
   Bin() {}
   Bin(double w, double h, double top, double x = 0, double y = 0) : 
       Rect(x, y, w, h), top(top) {}
+  Bin(Rect r, double top) : Rect(r), top(top) {}
   double VacantSpace() const;
 };
 
@@ -101,10 +102,13 @@ struct Context {
   Renderer* ren;
   Options opt;
   Context(int argc, char** argv);
+  int seed;
+
   void InitAlgo();
   void DestroyAlgo();
   void Render();
   bool Validate();
+  void ThreadInit();
 };
 
 // Algorithms definitions.
@@ -154,17 +158,40 @@ class PyramidAlgo : public Algorithm {
   void PackOnTop(Rect* r);
   PyramidPos PackToPyramid(std::set<Rect>* s, Rect* r);
   void PerformPacking(std::set<Rect>* s, PyramidPos* p, Rect* r);
+  void InitParams(int n);
 
- private:
+ protected:
   double shift_;
   double h_;
   double top_h_;
 };
 
+class SimplePyramidAlgo : public Algorithm {
+ public:
+  void InitParams(int n);
+  void Pack(int n, double xbe, double ybe, Context* context);
+  void ConvertCooToComplPyramid(Rect* r, int ind);
+  double YOfType(int t);
+  double WOfType(int t);
+  int TypeOfW(double w);
+  void PackToPyramid(Bin* bins, Rect* r);
+  void PackOnTop(Rect* r);
+
+ private:
+  double step_;
+  int nsteps_;
+  double h_;
+  double top_h_;
+  double w_step_;
+};
+
 // Utility & inline functions.
+extern __thread random_data __random_data;
 
 inline double rand_double() {
-  return rand()/(float(RAND_MAX) + 1);
+  int32_t rand;
+  random_r(&__random_data, &rand);
+  return rand / (float(RAND_MAX) + 1);
 }
 
 inline void PackToBin(Bin *bin, Rect* r) {
@@ -174,7 +201,7 @@ inline void PackToBin(Bin *bin, Rect* r) {
 }
 
 inline bool double_less(double a, double b) {
-  return (a + 1e-8) <= b;
+  return (a + 1e-5) <= b;
 }
 
 inline bool double_eq(double a, double b) {

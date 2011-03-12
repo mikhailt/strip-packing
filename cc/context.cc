@@ -1,10 +1,14 @@
 #include "strip_packing.h"
 
+#define PRNG_BUFSZ 128
+
+void Context::ThreadInit() {
+  char* statebuf = new char[PRNG_BUFSZ];
+  initstate_r(seed, statebuf, PRNG_BUFSZ, &__random_data);
+}
+
 Context::Context(int argc, char** argv) {
-  timespec ts;
-  
-  clock_gettime(CLOCK_REALTIME, &ts);
-  srand(ts.tv_sec + ts.tv_nsec);
+  seed = rand();
   opt.Parse(argc, argv);
 }
 
@@ -15,6 +19,8 @@ void Context::InitAlgo() {
     algo = new Kp2MspBalanced;
   } else if ("pyramid" == opt.algo) {
     algo = new PyramidAlgo;
+  } else if ("simple_pyramid" == opt.algo) {
+    algo = new SimplePyramidAlgo;
   }
 }
 

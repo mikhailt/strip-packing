@@ -4,6 +4,8 @@
 
 #include "strip_packing.h"
 
+__thread random_data __random_data;
+
 struct SolutionInfo {
   double h;
   double area;
@@ -23,10 +25,14 @@ Context* context[nworkers];
 void* Worker(void* arg) {
   bool valid;
   int ind = reinterpret_cast<long long>(arg);
+  
+  context[ind]->ThreadInit();
+
   int cnt = context[ind]->opt.t / nworkers;
   if (ind < (context[ind]->opt.t % nworkers)) {
     ++cnt;
   }
+
   for (int y = 0; y < cnt; ++y) {
     context[ind]->InitAlgo();
     context[ind]->algo->Pack(context[ind]->opt.n, 0, 0, context[ind]);
@@ -50,28 +56,35 @@ int main(int argc, char** argv) {
   std::cout << std::fixed;
   std::cout << std::setprecision(4);
   
+  timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  srand(ts.tv_sec + ts.tv_nsec);
+  
   pthread_mutex_init(&sols_mu, NULL);
   for (int y = 0; y < nworkers; ++y) {
     context[y] = new Context(argc, argv);
   }
   
   pthread_t t[nworkers];
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
   for (int y = 0; y < nworkers; ++y) {
-    pthread_create(&t[y], NULL, Worker, reinterpret_cast<void*>(y));
+    pthread_create(&t[y], &attr, Worker, reinterpret_cast<void*>(y));
   }
   for (int y = 0; y < nworkers; ++y) {
     pthread_join(t[y], NULL);
   }
-  
+
   double coef_s = 0;
   double divisor;
   double sh;
   double vacant_area;
   double coef;
   if (context[0]->opt.sqrt_divisor) {
-    divisor = pow(context[0]->opt.n, 1.0 / 2.0);
+    divisor = powl(context[0]->opt.n, 1.0 / 2.0);
   } else {
-    divisor = pow(context[0]->opt.n, 2.0 / 3.0);
+    divisor = powl(context[0]->opt.n, 2.0 / 3.0);
   }
   std::cout << "n = " << context[0]->opt.n << "\n";
   if (context[0]->opt.sqrt_divisor)  {
